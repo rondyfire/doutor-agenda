@@ -31,7 +31,8 @@ yarn-error.log*
 .pnpm-debug.log*
 
 # env files (can opt-in for committing if needed)
-.env*
+.env.*
+!.env
 
 # vercel
 .vercel
@@ -42,7 +43,6 @@ next-env.d.ts
 
 # Ignorar arquivos do sistema e do VS Code
 node_modules/
-.env
 .vscode/
 *.log
 *.pfx

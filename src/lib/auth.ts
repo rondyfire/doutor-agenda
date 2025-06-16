@@ -1,20 +1,21 @@
-export const auth = {
-  api: {
-    getSession: async ({ headers }: { headers: Headers }) => {
-      // TODO: Implement session check
-      return null;
-    },
-    signIn: async ({ email, password }: { email: string; password: string }) => {
-      // TODO: Implement sign in
-      return { success: true };
-    },
-    signUp: async ({ name, email, password }: { name: string; email: string; password: string }) => {
-      // TODO: Implement sign up
-      return { success: true };
-    },
-    signOut: async () => {
-      // TODO: Implement sign out
-      return { success: true };
+import { betterAuth } from "better-auth";
+import { drizzleAdapter } from "better-auth/adapters/drizzle";
+import { db } from "@/db";
+
+export const auth = betterAuth({
+  database: drizzleAdapter(db, {
+    provider: "pg"
+  }),
+  session: {
+    strategy: "jwt",
+    maxAge: 30 * 24 * 60 * 60, // 30 days
+  },
+  callbacks: {
+    async session({ session, token }) {
+      if (session.user) {
+        session.user.id = token.sub;
+      }
+      return session;
     },
   },
-}; 
+}); 
