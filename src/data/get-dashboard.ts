@@ -1,59 +1,83 @@
 import { db } from "@/db";
-import { appointments, patients, users } from "@/db/schema";
-import { desc, eq, sql } from "drizzle-orm";
+import { patients, doctors, appointments } from "@/db/schema";
+import { eq } from "drizzle-orm";
 
-export async function getDashboard(userId: string) {
-  const today = new Date();
-  const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-  const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
+export async function getDashboardData(clinicId: string) {
+  const [patientsCount, doctorsCount, appointmentsCount] = await Promise.all([
+    db.select().from(patients).where(eq(patients.clinicId, clinicId)),
+    db.select().from(doctors).where(eq(doctors.clinicId, clinicId)),
+    db.select().from(appointments).where(eq(appointments.clinicId, clinicId)),
+  ]);
 
-  // Buscar estatísticas gerais
-  const [stats] = await db
-    .select({
-      totalPatients: sql<number>`count(distinct ${patients.id})`,
-      totalAppointments: sql<number>`count(distinct ${appointments.id})`,
-      todayAppointments: sql<number>`count(distinct case when ${appointments.date} >= ${startOfDay} and ${appointments.date} < ${endOfDay} then ${appointments.id} end)`,
-    })
-    .from(appointments)
-    .leftJoin(patients, eq(appointments.patientId, patients.id))
-    .where(eq(appointments.userId, userId));
+  // Mock data for dashboard components
+  const dailyAppointmentsData = [
+    { date: "2024-01-01", appointments: 5, revenue: 50000 },
+    { date: "2024-01-02", appointments: 8, revenue: 80000 },
+    { date: "2024-01-03", appointments: 12, revenue: 120000 },
+    { date: "2024-01-04", appointments: 6, revenue: 60000 },
+    { date: "2024-01-05", appointments: 9, revenue: 90000 },
+    { date: "2024-01-06", appointments: 3, revenue: 30000 },
+    { date: "2024-01-07", appointments: 7, revenue: 70000 },
+  ];
 
-  // Buscar próximos compromissos
-  const upcomingAppointments = await db
-    .select({
-      id: appointments.id,
-      date: appointments.date,
-      status: appointments.status,
-      patient: {
-        id: patients.id,
-        name: patients.name,
-      },
-    })
-    .from(appointments)
-    .leftJoin(patients, eq(appointments.patientId, patients.id))
-    .where(
-      sql`${appointments.date} >= ${startOfDay} and ${appointments.userId} = ${userId}`
-    )
-    .orderBy(desc(appointments.date))
-    .limit(5);
+  const topDoctors = [
+    {
+      id: "1",
+      name: "Dr. João Silva",
+      appointments: 25,
+      specialty: "Cardiologia",
+      avatarImageUrl: null,
+    },
+    {
+      id: "2",
+      name: "Dra. Maria Santos",
+      appointments: 20,
+      specialty: "Dermatologia",
+      avatarImageUrl: null,
+    },
+    {
+      id: "3",
+      name: "Dr. Pedro Costa",
+      appointments: 18,
+      specialty: "Ortopedia",
+      avatarImageUrl: null,
+    },
+  ];
 
-  // Buscar pacientes recentes
-  const recentPatients = await db
-    .select({
-      id: patients.id,
-      name: patients.name,
-      email: patients.email,
-      phone: patients.phone,
-      createdAt: patients.createdAt,
-    })
-    .from(patients)
-    .where(eq(patients.userId, userId))
-    .orderBy(desc(patients.createdAt))
-    .limit(5);
+  const topSpecialties = [
+    { specialty: "Cardiologia", appointments: 45 },
+    { specialty: "Dermatologia", appointments: 38 },
+    { specialty: "Ortopedia", appointments: 32 },
+  ];
+
+  const todayAppointments = [
+    {
+      id: "1",
+      patientName: "João Silva",
+      doctorName: "Dr. Carlos",
+      time: "09:00",
+      status: "confirmed",
+    },
+    {
+      id: "2",
+      patientName: "Maria Santos",
+      doctorName: "Dra. Ana",
+      time: "10:30",
+      status: "confirmed",
+    },
+  ];
 
   return {
-    stats,
-    upcomingAppointments,
-    recentPatients,
+    patientsCount: patientsCount.length,
+    doctorsCount: doctorsCount.length,
+    appointmentsCount: appointmentsCount.length,
+    dailyAppointmentsData,
+    topDoctors,
+    topSpecialties,
+    todayAppointments,
+    totalRevenue: { total: 0 },
+    totalAppointments: { total: appointmentsCount.length },
+    totalPatients: { total: patientsCount.length },
+    totalDoctors: { total: doctorsCount.length },
   };
-} 
+}

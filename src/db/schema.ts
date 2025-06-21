@@ -206,15 +206,10 @@ export const appointmentsTableRelations = relations(
   }),
 );
 
-export const schema = {
-  usersTable,
-  sessionsTable,
-  accountsTable,
-  verificationsTable,
-  clinicsTable,
-  usersToClinicsTable,
-  doctorsTable,
-  patientsTable,
-  appointmentsTable,
-  patientSexEnum,
+export {
+  usersTable as users,
+  clinicsTable as clinics,
+  doctorsTable as doctors,
+  patientsTable as patients,
+  appointmentsTable as appointments,
 };

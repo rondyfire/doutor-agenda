@@ -1,107 +1,40 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
 
-export function PageContainer({
-  className,
-  children,
-  ...props
-}: React.HTMLAttributes<HTMLDivElement>) {
-  return (
-    <div
-      className={cn(
-        "container mx-auto flex flex-col gap-4 p-4 md:p-8",
-        className
-      )}
-      {...props}
-    >
-      {children}
-    </div>
-  );
-}
+export const PageContainer = ({ children }: { children: React.ReactNode }) => {
+  return <div className="w-full space-y-6 p-6">{children}</div>;
+};
 
-export function PageHeader({
-  className,
-  children,
-  ...props
-}: React.HTMLAttributes<HTMLDivElement>) {
+export const PageHeader = ({ children }: { children: React.ReactNode }) => {
   return (
-    <div
-      className={cn("flex flex-col gap-4 md:flex-row md:items-center md:justify-between", className)}
-      {...props}
-    >
-      {children}
-    </div>
+    <div className="flex w-full items-center justify-between">{children}</div>
   );
-}
+};
 
-export function PageHeaderContent({
-  className,
+export const PageHeaderContent = ({
   children,
-  ...props
-}: React.HTMLAttributes<HTMLDivElement>) {
-  return (
-    <div className={cn("flex flex-col gap-1", className)} {...props}>
-      {children}
-    </div>
-  );
-}
+}: {
+  children: React.ReactNode;
+}) => {
+  return <div className="w-full space-y-1">{children}</div>;
+};
 
-export function PageTitle({
-  className,
-  children,
-  ...props
-}: React.HTMLAttributes<HTMLHeadingElement>) {
-  return (
-    <h1
-      className={cn("text-2xl font-bold tracking-tight", className)}
-      {...props}
-    >
-      {children}
-    </h1>
-  );
-}
+export const PageTitle = ({ children }: { children: React.ReactNode }) => {
+  return <h1 className="text-2xl font-bold">{children}</h1>;
+};
 
-export function PageDescription({
-  className,
+export const PageDescription = ({
   children,
-  ...props
-}: React.HTMLAttributes<HTMLParagraphElement>) {
-  return (
-    <p
-      className={cn("text-sm text-muted-foreground", className)}
-      {...props}
-    >
-      {children}
-    </p>
-  );
-}
+}: {
+  children: React.ReactNode;
+}) => {
+  return <p className="text-muted-foreground text-sm">{children}</p>;
+};
 
-export function PageActions({
-  className,
-  children,
-  ...props
-}: React.HTMLAttributes<HTMLDivElement>) {
-  return (
-    <div
-      className={cn("flex items-center gap-2", className)}
-      {...props}
-    >
-      {children}
-    </div>
-  );
-}
+export const PageActions = ({ children }: { children: React.ReactNode }) => {
+  return <div className="flex items-center gap-2">{children}</div>;
+};
 
-export function PageContent({
-  className,
-  children,
-  ...props
-}: React.HTMLAttributes<HTMLDivElement>) {
-  return (
-    <div
-      className={cn("flex flex-col gap-4", className)}
-      {...props}
-    >
-      {children}
-    </div>
-  );
-} 
+export const PageContent = ({ children }: { children: React.ReactNode }) => {
+  return <div className="space-y-6">{children}</div>;
+}; 

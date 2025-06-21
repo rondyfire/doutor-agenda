@@ -1,19 +1,34 @@
-import { auth } from "@/lib/auth";
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { ReactNode } from "react";
+
+import { auth } from "@/lib/auth";
 
 interface WithAuthenticationProps {
-  children: ReactNode;
+  children: React.ReactNode;
+  mustHaveClinic?: boolean;
+  mustHavePlan?: boolean;
 }
 
-async function WithAuthentication({ children }: WithAuthenticationProps) {
-  const session = await auth();
+export default async function WithAuthentication({
+  children,
+  mustHaveClinic = false,
+  mustHavePlan = false,
+}: WithAuthenticationProps) {
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
 
-  if (!session) {
+  if (!session?.user) {
     redirect("/authentication");
   }
 
-  return <>{children}</>;
-}
+  if (mustHaveClinic && !session.user.clinic) {
+    redirect("/clinic-form");
+  }
 
-export default WithAuthentication; 
+  if (mustHavePlan && !session.user.plan) {
+    redirect("/subscription");
+  }
+
+  return <>{children}</>;
+} 
