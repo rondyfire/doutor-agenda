@@ -10,6 +10,7 @@ import { usersTable, usersToClinicsTable } from "@/db/schema";
 const FIVE_MINUTES = 5 * 60;
 
 export const auth = betterAuth({
+  trustedOrigins: ["http://localhost:3000", "http://localhost:3001"],
   database: drizzleAdapter(db, {
     provider: "pg",
     usePlural: true,

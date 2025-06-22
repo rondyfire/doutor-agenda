@@ -1,73 +1,146 @@
 "use client";
 
 import {
-  Home,
-  Users,
-  Calendar,
-  Stethoscope,
-  Building,
+  CalendarDays,
+  Gem,
+  LayoutDashboard,
   LogOut,
+  Stethoscope,
+  UsersRound,
 } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
+
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarHeader,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+} from "@/components/ui/sidebar";
+import { authClient } from "@/lib/auth-client";
+
+const items = [
+  {
+    title: "Dashboard",
+    url: "/dashboard",
+    icon: LayoutDashboard,
+  },
+  {
+    title: "Agendamentos",
+    url: "/appointments",
+    icon: CalendarDays,
+  },
+  {
+    title: "Médicos",
+    url: "/doctors",
+    icon: Stethoscope,
+  },
+  {
+    title: "Pacientes",
+    url: "/patients",
+    icon: UsersRound,
+  },
+];
 
 export function AppSidebar() {
+  const router = useRouter();
+  const session = authClient.useSession();
+  const pathname = usePathname();
+
+  const handleSignOut = async () => {
+    await authClient.signOut({
+      fetchOptions: {
+        onSuccess: () => {
+          router.push("/authentication");
+        },
+      },
+    });
+  };
   return (
-    <div className="flex h-full w-64 flex-col bg-background border-r">
-      <div className="flex h-14 items-center border-b px-4">
-        <h2 className="text-lg font-semibold">Doutor Agenda</h2>
-      </div>
-      
-      <div className="flex-1 space-y-1 p-2">
-        <Link
-          href="/dashboard"
-          className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground"
-        >
-          <Home size={16} />
-          Dashboard
-        </Link>
-        
-        <Link
-          href="/dashboard/patients"
-          className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground"
-        >
-          <Users size={16} />
-          Pacientes
-        </Link>
-        
-        <Link
-          href="/dashboard/appointments"
-          className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground"
-        >
-          <Calendar size={16} />
-          Consultas
-        </Link>
-        
-        <Link
-          href="/dashboard/doctors"
-          className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground"
-        >
-          <Stethoscope size={16} />
-          Médicos
-        </Link>
-        
-        <Link
-          href="/dashboard/clinics"
-          className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground"
-        >
-          <Building size={16} />
-          Clínicas
-        </Link>
-      </div>
-      
-      <div className="border-t p-2">
-        <Link
-          href="/api/auth/signout"
-          className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground"
-        >
-          <LogOut size={16} />
-          Sair
-        </Link>
-      </div>
-    </div>
+    <Sidebar>
+      <SidebarHeader className="border-b p-4">
+        <Image src="/logo.svg" alt="Doutor Agenda" width={136} height={28} />
+      </SidebarHeader>
+      <SidebarContent>
+        <SidebarGroup>
+          <SidebarGroupLabel>Menu Principal</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {items.map((item) => (
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton asChild isActive={pathname === item.url}>
+                    <Link href={item.url}>
+                      <item.icon />
+                      <span>{item.title}</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+        <SidebarGroup>
+          <SidebarGroupLabel>Outros</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  asChild
+                  isActive={pathname === "/subscription"}
+                >
+                  <Link href="/subscription">
+                    <Gem />
+                    <span>Assinatura</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+      </SidebarContent>
+      <SidebarFooter>
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <SidebarMenuButton size="lg">
+                  <Avatar>
+                    <AvatarFallback>F</AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <p className="text-sm">
+                      {session.data?.user?.clinic?.name}
+                    </p>
+                    <p className="text-muted-foreground text-sm">
+                      {session.data?.user.email}
+                    </p>
+                  </div>
+                </SidebarMenuButton>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                <DropdownMenuItem onClick={handleSignOut}>
+                  <LogOut />
+                  Sair
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarFooter>
+    </Sidebar>
   );
 }

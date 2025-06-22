@@ -14,7 +14,7 @@ import {
   PageHeaderContent,
   PageTitle,
 } from "@/components/ui/page-container";
-import { getDashboardData } from "@/data/get-dashboard";
+import { getDashboard } from "@/data/get-dashboard";
 import WithAuthentication from "@/hocs/with-authentication";
 import { auth } from "@/lib/auth";
 
@@ -36,12 +36,22 @@ const DashboardPage = async ({ searchParams }: DashboardPageProps) => {
   const session = await auth.api.getSession({
     headers: await headers(),
   });
+
+  if (!session?.user) {
+    redirect("/authentication");
+  }
+
+  if (!session.user.clinic?.id) {
+    redirect("/clinic-form");
+  }
+
   const { from, to } = await searchParams;
   if (!from || !to) {
     redirect(
       `/dashboard?from=${dayjs().format("YYYY-MM-DD")}&to=${dayjs().add(1, "month").format("YYYY-MM-DD")}`,
     );
   }
+
   const {
     totalRevenue,
     totalAppointments,
@@ -51,13 +61,13 @@ const DashboardPage = async ({ searchParams }: DashboardPageProps) => {
     topSpecialties,
     todayAppointments,
     dailyAppointmentsData,
-  } = await getDashboardData({
+  } = await getDashboard({
     from,
     to,
     session: {
       user: {
         clinic: {
-          id: session!.user.clinic!.id,
+          id: session.user.clinic.id,
         },
       },
     },

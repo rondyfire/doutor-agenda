@@ -1,71 +1,53 @@
+"use client";
+
 import { ColumnDef } from "@tanstack/react-table";
-import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
 
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { MoreHorizontal, Edit, Trash2 } from "lucide-react";
+import { patientsTable } from "@/db/schema";
 
-export const patientsTableColumns: ColumnDef<any>[] = [
+import PatientsTableActions from "./table-actions";
+
+type Patient = typeof patientsTable.$inferSelect;
+
+export const patientsTableColumns: ColumnDef<Patient>[] = [
   {
+    id: "name",
     accessorKey: "name",
     header: "Nome",
   },
   {
+    id: "email",
     accessorKey: "email",
     header: "Email",
   },
   {
+    id: "phoneNumber",
     accessorKey: "phoneNumber",
     header: "Telefone",
-  },
-  {
-    accessorKey: "sex",
-    header: "Sexo",
-    cell: ({ row }) => {
-      const sex = row.getValue("sex") as string;
-      return (
-        <Badge variant={sex === "male" ? "default" : "secondary"}>
-          {sex === "male" ? "Masculino" : "Feminino"}
-        </Badge>
+    cell: (params) => {
+      const patient = params.row.original;
+      const phoneNumber = patient.phoneNumber;
+      if (!phoneNumber) return "";
+      const formatted = phoneNumber.replace(
+        /(\d{2})(\d{5})(\d{4})/,
+        "($1) $2-$3",
       );
+      return formatted;
     },
   },
   {
-    accessorKey: "createdAt",
-    header: "Data de Cadastro",
-    cell: ({ row }) => {
-      const date = row.getValue("createdAt") as string;
-      return format(new Date(date), "dd/MM/yyyy", { locale: ptBR });
+    id: "sex",
+    accessorKey: "sex",
+    header: "Sexo",
+    cell: (params) => {
+      const patient = params.row.original;
+      return patient.sex === "male" ? "Masculino" : "Feminino";
     },
   },
   {
     id: "actions",
-    header: "Ações",
-    cell: ({ row }) => {
-      const patient = row.original;
-
-      return (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="h-8 w-8 p-0">
-              <span className="sr-only">Abrir menu</span>
-              <MoreHorizontal className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem>
-              <Edit className="mr-2 h-4 w-4" />
-              Editar
-            </DropdownMenuItem>
-            <DropdownMenuItem className="text-destructive">
-              <Trash2 className="mr-2 h-4 w-4" />
-              Excluir
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      );
+    cell: (params) => {
+      const patient = params.row.original;
+      return <PatientsTableActions patient={patient} />;
     },
   },
-]; 
+];

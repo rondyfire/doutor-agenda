@@ -1,83 +1,146 @@
+import dayjs from "dayjs";
+import { and, count, desc, eq, gte, lte, sql, sum } from "drizzle-orm";
+
 import { db } from "@/db";
-import { patients, doctors, appointments } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { appointmentsTable, doctorsTable, patientsTable } from "@/db/schema";
 
-export async function getDashboardData(clinicId: string) {
-  const [patientsCount, doctorsCount, appointmentsCount] = await Promise.all([
-    db.select().from(patients).where(eq(patients.clinicId, clinicId)),
-    db.select().from(doctors).where(eq(doctors.clinicId, clinicId)),
-    db.select().from(appointments).where(eq(appointments.clinicId, clinicId)),
-  ]);
+interface Params {
+  from: string;
+  to: string;
+  session: {
+    user: {
+      clinic: {
+        id: string;
+      };
+    };
+  };
+}
 
-  // Mock data for dashboard components
-  const dailyAppointmentsData = [
-    { date: "2024-01-01", appointments: 5, revenue: 50000 },
-    { date: "2024-01-02", appointments: 8, revenue: 80000 },
-    { date: "2024-01-03", appointments: 12, revenue: 120000 },
-    { date: "2024-01-04", appointments: 6, revenue: 60000 },
-    { date: "2024-01-05", appointments: 9, revenue: 90000 },
-    { date: "2024-01-06", appointments: 3, revenue: 30000 },
-    { date: "2024-01-07", appointments: 7, revenue: 70000 },
-  ];
-
-  const topDoctors = [
-    {
-      id: "1",
-      name: "Dr. João Silva",
-      appointments: 25,
-      specialty: "Cardiologia",
-      avatarImageUrl: null,
-    },
-    {
-      id: "2",
-      name: "Dra. Maria Santos",
-      appointments: 20,
-      specialty: "Dermatologia",
-      avatarImageUrl: null,
-    },
-    {
-      id: "3",
-      name: "Dr. Pedro Costa",
-      appointments: 18,
-      specialty: "Ortopedia",
-      avatarImageUrl: null,
-    },
-  ];
-
-  const topSpecialties = [
-    { specialty: "Cardiologia", appointments: 45 },
-    { specialty: "Dermatologia", appointments: 38 },
-    { specialty: "Ortopedia", appointments: 32 },
-  ];
-
-  const todayAppointments = [
-    {
-      id: "1",
-      patientName: "João Silva",
-      doctorName: "Dr. Carlos",
-      time: "09:00",
-      status: "confirmed",
-    },
-    {
-      id: "2",
-      patientName: "Maria Santos",
-      doctorName: "Dra. Ana",
-      time: "10:30",
-      status: "confirmed",
-    },
-  ];
-
-  return {
-    patientsCount: patientsCount.length,
-    doctorsCount: doctorsCount.length,
-    appointmentsCount: appointmentsCount.length,
-    dailyAppointmentsData,
+export const getDashboard = async ({ from, to, session }: Params) => {
+  const chartStartDate = dayjs().subtract(10, "days").startOf("day").toDate();
+  const chartEndDate = dayjs().add(10, "days").endOf("day").toDate();
+  const [
+    [totalRevenue],
+    [totalAppointments],
+    [totalPatients],
+    [totalDoctors],
     topDoctors,
     topSpecialties,
     todayAppointments,
-    totalRevenue: { total: 0 },
-    totalAppointments: { total: appointmentsCount.length },
-    totalPatients: { total: patientsCount.length },
-    totalDoctors: { total: doctorsCount.length },
+    dailyAppointmentsData,
+  ] = await Promise.all([
+    db
+      .select({
+        total: sum(appointmentsTable.appointmentPriceInCents),
+      })
+      .from(appointmentsTable)
+      .where(
+        and(
+          eq(appointmentsTable.clinicId, session.user.clinic.id),
+          gte(appointmentsTable.date, new Date(from)),
+          lte(appointmentsTable.date, new Date(to)),
+        ),
+      ),
+    db
+      .select({
+        total: count(),
+      })
+      .from(appointmentsTable)
+      .where(
+        and(
+          eq(appointmentsTable.clinicId, session.user.clinic.id),
+          gte(appointmentsTable.date, new Date(from)),
+          lte(appointmentsTable.date, new Date(to)),
+        ),
+      ),
+    db
+      .select({
+        total: count(),
+      })
+      .from(patientsTable)
+      .where(eq(patientsTable.clinicId, session.user.clinic.id)),
+    db
+      .select({
+        total: count(),
+      })
+      .from(doctorsTable)
+      .where(eq(doctorsTable.clinicId, session.user.clinic.id)),
+    db
+      .select({
+        id: doctorsTable.id,
+        name: doctorsTable.name,
+        avatarImageUrl: doctorsTable.avatarImageUrl,
+        specialty: doctorsTable.specialty,
+        appointments: count(appointmentsTable.id),
+      })
+      .from(doctorsTable)
+      .leftJoin(
+        appointmentsTable,
+        and(
+          eq(appointmentsTable.doctorId, doctorsTable.id),
+          gte(appointmentsTable.date, new Date(from)),
+          lte(appointmentsTable.date, new Date(to)),
+        ),
+      )
+      .where(eq(doctorsTable.clinicId, session.user.clinic.id))
+      .groupBy(doctorsTable.id)
+      .orderBy(desc(count(appointmentsTable.id)))
+      .limit(10),
+    db
+      .select({
+        specialty: doctorsTable.specialty,
+        appointments: count(appointmentsTable.id),
+      })
+      .from(appointmentsTable)
+      .innerJoin(doctorsTable, eq(appointmentsTable.doctorId, doctorsTable.id))
+      .where(
+        and(
+          eq(appointmentsTable.clinicId, session.user.clinic.id),
+          gte(appointmentsTable.date, new Date(from)),
+          lte(appointmentsTable.date, new Date(to)),
+        ),
+      )
+      .groupBy(doctorsTable.specialty)
+      .orderBy(desc(count(appointmentsTable.id))),
+    db.query.appointmentsTable.findMany({
+      where: and(
+        eq(appointmentsTable.clinicId, session.user.clinic.id),
+        gte(appointmentsTable.date, new Date()),
+        lte(appointmentsTable.date, new Date()),
+      ),
+      with: {
+        patient: true,
+        doctor: true,
+      },
+    }),
+    db
+      .select({
+        date: sql<string>`DATE(${appointmentsTable.date})`.as("date"),
+        appointments: count(appointmentsTable.id),
+        revenue:
+          sql<number>`COALESCE(SUM(${appointmentsTable.appointmentPriceInCents}), 0)`.as(
+            "revenue",
+          ),
+      })
+      .from(appointmentsTable)
+      .where(
+        and(
+          eq(appointmentsTable.clinicId, session.user.clinic.id),
+          gte(appointmentsTable.date, chartStartDate),
+          lte(appointmentsTable.date, chartEndDate),
+        ),
+      )
+      .groupBy(sql`DATE(${appointmentsTable.date})`)
+      .orderBy(sql`DATE(${appointmentsTable.date})`),
+  ]);
+  return {
+    totalRevenue,
+    totalAppointments,
+    totalPatients,
+    totalDoctors,
+    topDoctors,
+    topSpecialties,
+    todayAppointments,
+    dailyAppointmentsData,
   };
-}
+};

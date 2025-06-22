@@ -205,11 +205,3 @@ export const appointmentsTableRelations = relations(
     }),
   }),
 );
-
-export {
-  usersTable as users,
-  clinicsTable as clinics,
-  doctorsTable as doctors,
-  patientsTable as patients,
-  appointmentsTable as appointments,
-};

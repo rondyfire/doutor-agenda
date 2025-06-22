@@ -1,8 +1,6 @@
+import { eq } from "drizzle-orm";
 import { headers } from "next/headers";
-import { redirect } from "next/navigation";
 
-import { Button } from "@/components/ui/button";
-import { DataTable } from "@/components/ui/data-table";
 import {
   PageActions,
   PageContainer,
@@ -12,24 +10,21 @@ import {
   PageHeaderContent,
   PageTitle,
 } from "@/components/ui/page-container";
+import { db } from "@/db";
+import { doctorsTable } from "@/db/schema";
 import WithAuthentication from "@/hocs/with-authentication";
 import { auth } from "@/lib/auth";
-import { Plus } from "lucide-react";
 
-import { doctorsTableColumns } from "./_components/table-columns";
+import AddDoctorButton from "./_components/add-doctor-button";
+import DoctorCard from "./_components/doctor-card";
 
 const DoctorsPage = async () => {
   const session = await auth.api.getSession({
     headers: await headers(),
   });
-
-  if (!session?.user?.clinic?.id) {
-    redirect("/clinic-form");
-  }
-
-  // TODO: Implementar busca de médicos
-  const doctors: any[] = [];
-
+  const doctors = await db.query.doctorsTable.findMany({
+    where: eq(doctorsTable.clinicId, session!.user.clinic!.id),
+  });
   return (
     <WithAuthentication mustHaveClinic mustHavePlan>
       <PageContainer>
@@ -37,18 +32,19 @@ const DoctorsPage = async () => {
           <PageHeaderContent>
             <PageTitle>Médicos</PageTitle>
             <PageDescription>
-              Gerencie os médicos da sua clínica.
+              Gerencie os médicos da sua clínica
             </PageDescription>
           </PageHeaderContent>
           <PageActions>
-            <Button>
-              <Plus className="mr-2 h-4 w-4" />
-              Novo Médico
-            </Button>
+            <AddDoctorButton />
           </PageActions>
         </PageHeader>
         <PageContent>
-          <DataTable columns={doctorsTableColumns} data={doctors} />
+          <div className="grid grid-cols-3 gap-6">
+            {doctors.map((doctor) => (
+              <DoctorCard key={doctor.id} doctor={doctor} />
+            ))}
+          </div>
         </PageContent>
       </PageContainer>
     </WithAuthentication>

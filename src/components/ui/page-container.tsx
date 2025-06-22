@@ -1,6 +1,3 @@
-import * as React from "react";
-import { cn } from "@/lib/utils";
-
 export const PageContainer = ({ children }: { children: React.ReactNode }) => {
   return <div className="w-full space-y-6 p-6">{children}</div>;
 };
@@ -37,4 +34,4 @@ export const PageActions = ({ children }: { children: React.ReactNode }) => {
 
 export const PageContent = ({ children }: { children: React.ReactNode }) => {
   return <div className="space-y-6">{children}</div>;
-}; 
+};
