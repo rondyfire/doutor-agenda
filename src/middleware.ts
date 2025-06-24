@@ -18,6 +18,6 @@ export const config = {
     "/appointments",
     "/subscription",
     "/clinic-form",
-    "/((?!api|_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt|authentication).*)",
+    "/((?!api|_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt|authentication|new-subscription).*)",
   ],
 };
