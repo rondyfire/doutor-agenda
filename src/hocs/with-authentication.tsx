@@ -20,28 +20,13 @@ const WithAuthentication = async ({
   const session = await auth.api.getSession({
     headers: await headers(),
   });
-
-  console.log("WithAuthentication - Session:", {
-    hasUser: !!session?.user,
-    userId: session?.user?.id,
-    plan: session?.user?.plan,
-    hasClinic: !!session?.user?.clinic,
-    mustHavePlan,
-    mustHaveClinic,
-  });
-
   if (!session?.user) {
-    console.log("WithAuthentication - Redirecting to /authentication");
     redirect("/authentication");
   }
   if (mustHavePlan && !session.user.plan) {
-    console.log(
-      "WithAuthentication - Redirecting to /new-subscription (no plan)",
-    );
     redirect("/new-subscription");
   }
   if (mustHaveClinic && !session.user.clinic) {
-    console.log("WithAuthentication - Redirecting to /clinic-form (no clinic)");
     redirect("/clinic-form");
   }
   return children;

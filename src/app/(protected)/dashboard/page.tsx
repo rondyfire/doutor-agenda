@@ -29,7 +29,6 @@ interface DashboardPageProps {
   searchParams: Promise<{
     from: string;
     to: string;
-    payment?: string;
   }>;
 }
 
@@ -42,25 +41,11 @@ const DashboardPage = async ({ searchParams }: DashboardPageProps) => {
     redirect("/authentication");
   }
 
-  console.log("Dashboard - User session:", {
-    userId: session.user.id,
-    plan: session.user.plan,
-    hasClinic: !!session.user.clinic?.id,
-  });
-
   if (!session.user.clinic?.id) {
     redirect("/clinic-form");
   }
 
-  const { from, to, payment } = await searchParams;
-
-  // Se veio de um pagamento bem-sucedido, forçar refresh da sessão
-  if (payment === "success") {
-    console.log("Payment success detected, forcing session refresh");
-    // Redirecionar para limpar o parâmetro da URL
-    redirect("/dashboard");
-  }
-
+  const { from, to } = await searchParams;
   if (!from || !to) {
     redirect(
       `/dashboard?from=${dayjs().format("YYYY-MM-DD")}&to=${dayjs().add(1, "month").format("YYYY-MM-DD")}`,

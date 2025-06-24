@@ -11,7 +11,6 @@ const FIVE_MINUTES = 5 * 60;
 const ONE_MINUTE = 60;
 
 export const auth = betterAuth({
-  trustedOrigins: ["http://localhost:3000", "http://localhost:3001"],
   database: drizzleAdapter(db, {
     provider: "pg",
     usePlural: true,
@@ -77,8 +76,8 @@ export const auth = betterAuth({
   },
   session: {
     cookieCache: {
-      enabled: false,
-      maxAge: ONE_MINUTE,
+      enabled: true,
+      maxAge: FIVE_MINUTES,
     },
     modelName: "sessionsTable",
   },
